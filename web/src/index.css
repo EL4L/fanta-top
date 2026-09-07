@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/* Design system, in cascade order: tokens, element defaults, primitives,
+   shell, then the screens that compose them. */
+@import "./styles/tokens.css" layer(components);
+@import "./styles/base.css" layer(components);
+@import "./styles/primitives.css" layer(components);
+@import "./styles/shell.css" layer(components);
+@import "./styles/sheet.css" layer(components);
+@import "./styles/auction.css" layer(components);
+@import "./styles/views.css" layer(components);
+@import "./updates.css" layer(components);
+
+/* Two screens keep their own namespaced stylesheets; both are retimed to the
+   shared tokens rather than carrying private palettes. */
+@import "./league-settings.css" layer(components);
+@import "./random-auction.css" layer(components);
+
+@layer components {
+  .app-crash {
+    margin: 4rem auto;
+    max-width: 32rem;
+    padding: 2rem;
+    border: 1px solid var(--color-fanta-border);
+    border-radius: .75rem;
+    background: var(--color-fanta-panel);
+    color: var(--color-fanta-text);
+    text-align: center;
+  }
+
+  .app-crash p {
+    color: var(--color-fanta-muted);
+    margin: .75rem 0 1.25rem;
+  }
+
+  .ls-change-warning {
+    display: grid;
+    gap: 4px;
+    width: 100%;
+    border: 1px solid #936c25;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff2bd;
+    color: #49370e;
+    text-align: left;
+  }
+
+  .profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+
+  .profile-picker {
+    display: grid;
+    gap: var(--s-3);
+  }
+
+  .profile-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .profile-import {
+    position: relative;
+  }
+
+  .profile-import input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+}
+
+/* Exposed to Tailwind so utility classes stay available alongside the
+   hand-written component layer. */
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  --color-fanta-bg: #0b0d12;
+  --color-fanta-surface: #12151d;
+  --color-fanta-raised: #1d2230;
+  --color-fanta-border: #262c3a;
+  --color-fanta-text: #eceef3;
+  --color-fanta-muted: #99a2b3;
+  --color-fanta-brand: #7a7bff;
+  --color-fanta-go: #35d07f;
+  --color-fanta-warn: #ffb020;
+  --color-fanta-stop: #ff5d5d;
+}

@@ -1,0 +1,16 @@
+.git
+.venv
+.env
+.env.*
+**/.env
+**/.env.*
+**/.htpasswd
+**/node_modules
+web/dist
+config/profiles
+data/raw/calendario_lega.*
+data/processed
+data/uploads
+graphify-out
+**/__pycache__
+**/*.pyc
