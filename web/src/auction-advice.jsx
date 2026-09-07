@@ -79,19 +79,32 @@ export const bidVerdict = ({ advice, price, rules, legalMax }) => {
   };
 };
 
-export function BidGauge({ advice, price, rules, legalMax }) {
-  const { value, hasPrice } = bidVerdict({ advice, price, rules, legalMax });
+  export function BidGauge({
+  advice,
+  price,
+  rules,
+  legalMax,
+  maxPrice,
+}) {
+  const { value, hasPrice, hasPersonalMax, personalMax } = bidVerdict({
+  advice,
+  price,
+  rules,
+  legalMax,
+  maxPrice,
+});
   const maxBid = Number(advice?.maxBid ?? 0);
   if (!advice || maxBid < rules.auction.minPrice) return null;
   const market = Number(advice.summary?.estimatedMarketPrice);
   const idealMin = Number(advice.idealMin ?? 0);
   const idealMax = Number(advice.idealMax ?? 0);
   const anchor = Math.max(
-    maxBid,
-    Number.isFinite(market) ? market : 0,
-    hasPrice ? value : 0,
-    rules.auction.minPrice,
-  );
+  maxBid,
+  Number.isFinite(market) ? market : 0,
+  hasPrice ? value : 0,
+  hasPersonalMax ? personalMax : 0,
+  rules.auction.minPrice,
+);
   const scale = Math.max(anchor * 1.25, anchor + 4);
   const pct = (input) => clampPercent((input / scale) * 100);
 
@@ -117,6 +130,12 @@ export function BidGauge({ advice, price, rules, legalMax }) {
           className="gauge-mark gauge-mark--cap"
           style={{ "--at": `${pct(maxBid)}%` }}
         />
+        {hasPersonalMax ? (
+        <span
+           className="gauge-mark gauge-mark--personal"
+           style={{ "--at": `${pct(personalMax)}%` }}
+        />
+        ) : null}
         {hasPrice ? (
           <span className="gauge-thumb" style={{ "--now": `${pct(value)}%` }}>
             {value}
@@ -124,24 +143,33 @@ export function BidGauge({ advice, price, rules, legalMax }) {
         ) : null}
       </div>
       <div className="gauge-legend">
-        <span>
-          <i className="k-band" />
-          ideale{" "}
-          <b>
-            {idealMin}–{idealMax}
-          </b>
-        </span>
-        <span>
-          <i className="k-cap" />
-          non superare <b>{maxBid}</b>
-        </span>
-        {Number.isFinite(market) ? (
-          <span>
-            <i className="k-market" />
-            mercato <b>{market}</b>
-          </span>
-        ) : null}
-      </div>
+  <span>
+    <i className="k-band" />
+    ideale{" "}
+    <b>
+      {idealMin}–{idealMax}
+    </b>
+  </span>
+
+  <span>
+    <i className="k-cap" />
+    max modello <b>{maxBid}</b>
+  </span>
+
+  {hasPersonalMax ? (
+    <span>
+      <i className="k-personal" />
+      tuo max <b>{personalMax}</b>
+    </span>
+  ) : null}
+
+  {Number.isFinite(market) ? (
+    <span>
+      <i className="k-market" />
+      mercato <b>{market}</b>
+    </span>
+  ) : null}
+</div>
     </div>
   );
 }

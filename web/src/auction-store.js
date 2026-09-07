@@ -215,9 +215,6 @@ export const assignPlayer = (profileId, players, rules, request) => {
   if (!team) return failure("Scegli una squadra acquirente.");
   if (state.assigned[playerIdKey(player.id)])
     return failure(`${player.nome} risulta già assegnato.`);
-  const role = activeNominationRole(state.teams, rules);
-  if (role && player.ruolo !== role)
-    return failure(`In questa fase puoi assegnare solo ${roleName(role)}.`);
   if (!Number.isInteger(price) || price < rules.auction.minPrice)
     return failure(
       `Inserisci un prezzo intero di almeno ${rules.auction.minPrice} crediti.`,

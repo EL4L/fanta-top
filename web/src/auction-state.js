@@ -34,8 +34,7 @@ export const reconcileAuctionDraft = (draft, players, board) => {
       ? draft
       : emptyDraft();
   const assigned = board?.assigned?.[playerIdKey(selected.id)];
-  const wrongRole = board?.activeRole && selected.ruolo !== board.activeRole;
-  return assigned || wrongRole ? emptyDraft() : draft;
+ return assigned ? emptyDraft() : draft;
 };
 
 export const auctionPriceAtOrBelow = (value, rules) => {

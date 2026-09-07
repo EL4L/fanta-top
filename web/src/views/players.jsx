@@ -22,6 +22,7 @@ import {
   playerMark,
   savePlayerNotes,
   targetCount,
+  withMaxPrice,
   withNote,
   withTarget,
 } from "../player-notes.js";
@@ -260,6 +261,9 @@ export default function PlayersView({
         updateNotes(withTarget(notes, player.id, !mark.target))
       }
       onNoteChange={(value) => updateNotes(withNote(notes, player.id, value))}
+      onMaxPriceChange={(value) =>
+  updateNotes(withMaxPrice(notes, player.id, value))
+      }
       auction={
         board && {
           live,
@@ -520,6 +524,7 @@ export function PlayerDetail({
   auction,
   onToggleTarget,
   onNoteChange,
+  onMaxPriceChange,
 }) {
   const history = Object.entries(player.storico || {});
   const outliers = valuation.outliersFor(player);
@@ -564,6 +569,30 @@ export function PlayerDetail({
       </div>
 
       {auction ? <LiveAuctionPanel player={player} {...auction} /> : null}
+    <label className="field" htmlFor="player-max-price">
+  <span className="field-label">Prezzo massimo</span>
+
+  <div className="input-with-suffix">
+    <input
+      id="player-max-price"
+      className="input"
+      type="number"
+      min="0"
+      step="1"
+      inputMode="numeric"
+      value={mark?.maxPrice ?? ""}
+      onChange={(event) =>
+        onMaxPriceChange(event.target.value)
+      }
+      placeholder="Es. 85"
+    />
+    <span className="input-suffix">cr</span>
+  </div>
+
+  <span className="field-help">
+    Il tuo limite personale per questo giocatore. Salvato per profilo.
+  </span>
+</label>
 
       <label className="field" htmlFor="player-note">
         <span className="field-label">Le mie note</span>
@@ -727,7 +756,6 @@ function LiveAuctionPanel({
 
   const buyer = board.teams[owner];
   const legalMax = buyer?.maxBid ?? 0;
-  const blockedRole = board.activeRole && player.ruolo !== board.activeRole;
   const summary = advice?.summary || {};
   const forOther = owner !== board.userTeamIndex;
   const { tone, headline, recommendation, purpose } = bidVerdict({
@@ -787,17 +815,16 @@ function LiveAuctionPanel({
               type="button"
               className="btn btn--primary"
               onClick={onAssign}
-              disabled={blockedRole}
-            >
+              >
               Assegna
             </button>
           </div>
 
           <div className="bid-foot">
             <span className="micro">
-              {blockedRole
-                ? `Fase ${ROLE_LABELS[board.activeRole].toLowerCase()}: questo ruolo non è ancora in asta.`
-                : `Massimo ${legalMax} crediti · ${buyer?.slotsLeft?.[player.ruolo] ?? 0} posti ${player.ruolo} liberi.`}
+                {`Massimo ${legalMax} crediti · ${
+  buyer?.slotsLeft?.[player.ruolo] ?? 0
+} posti ${player.ruolo} liberi.`}
               {forOther
                 ? " Stai registrando l'acquisto di un'altra squadra: il consiglio resta calcolato sulla tua."
                 : ""}

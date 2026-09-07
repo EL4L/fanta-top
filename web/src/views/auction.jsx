@@ -36,6 +36,10 @@ import {
   ROLE_LABELS,
   formatTier,
 } from "../ui.jsx";
+import {
+  loadPlayerNotes,
+  playerMark,
+} from "../player-notes.js";
 
 /**
  * Live auction.
@@ -72,24 +76,39 @@ export default function AuctionView({
     setDraft((current) => ({ ...current, query: value }));
   const setPrice = (value) =>
     setDraft((current) => ({ ...current, price: value }));
-  const player = draftPlayer(draft, data.players);
-  const setPlayer = (candidate) =>
-    setDraft((current) => ({
-      ...current,
-      playerId: candidate ? candidate.id : null,
-    }));
-  const [owner, setOwner] = useState(userTeamIndex);
-  const [message, setMessage] = useState(null);
-  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
-  const [showSetup, setShowSetup] = useState(false);
-  const priceTouched = useRef(false);
-  const resetSignature = `${storageKey}|${rulesSignature}|${defaultUserTeamIndex}`;
-  const lastResetSignature = useRef(resetSignature);
-  const lastConfiguredUserTeam = useRef({
-    key: storageKey,
-    index: defaultUserTeamIndex,
-  });
+const player = draftPlayer(draft, data.players);
 
+const playerNotes = useMemo(
+  () => loadPlayerNotes(activeProfileId),
+  [activeProfileId],
+);
+
+const selectedPlayerMark = player
+  ? playerMark(playerNotes, player.id)
+  : null;
+
+const maxPrice = selectedPlayerMark?.maxPrice ?? null;
+
+const setPlayer = (candidate) =>
+  setDraft((current) => ({
+    ...current,
+    playerId: candidate ? candidate.id : null,
+  }));
+
+const [owner, setOwner] = useState(userTeamIndex);
+const [message, setMessage] = useState(null);
+const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+const [showSetup, setShowSetup] = useState(false);
+const priceTouched = useRef(false);
+
+const resetSignature = `${storageKey}|${rulesSignature}|${defaultUserTeamIndex}`;
+
+const lastResetSignature = useRef(resetSignature);
+
+const lastConfiguredUserTeam = useRef({
+  key: storageKey,
+  index: defaultUserTeamIndex,
+});
   /* A profile or a rules change starts a different auction: the team chosen in
      the settings wins over the one stored for the previous configuration. */
   useEffect(() => {
@@ -125,7 +144,6 @@ export default function AuctionView({
     overview: true,
   });
 
-  const activeRole = board.activeRole;
   const myTeam = board.teams[userTeamIndex];
   const mySlots = slotsLeft(myTeam, activeRules);
   const myMax = legalMaxBid(myTeam, activeRules);
@@ -144,11 +162,10 @@ export default function AuctionView({
       .filter(
         (candidate) =>
           !board.assigned[playerIdKey(candidate.id)] &&
-          (!activeRole || candidate.ruolo === activeRole) &&
           candidate.nome.toLowerCase().includes(needle),
       )
       .slice(0, 8);
-  }, [data.players, board.assigned, activeRole, query]);
+  }, [data.players, board.assigned, query]);
 
   /* The price box opens on the estimated market price so the common case needs
      no typing; the moment the user edits it we stop overwriting their number. */
@@ -184,13 +201,6 @@ export default function AuctionView({
   };
 
   const selectPlayer = (candidate) => {
-    if (activeRole && candidate.ruolo !== activeRole) {
-      say(
-        `In questa fase puoi chiamare solo ${ROLE_LABELS[activeRole].toLowerCase()}.`,
-        "stop",
-      );
-      return;
-    }
     priceTouched.current = false;
     setPlayer(candidate);
     setQuery(candidate.nome);
@@ -260,13 +270,6 @@ export default function AuctionView({
 
   return (
     <div className="auction">
-      {activeRole ? (
-        <p className="phase">
-          <RoleChip role={activeRole} />
-          Fase {ROLE_LABELS[activeRole].toLowerCase()}: si chiamano solo loro.
-        </p>
-      ) : null}
-
       <div className="auction-split">
         <div className="stack">
           <MyTeamBar
@@ -359,6 +362,7 @@ export default function AuctionView({
             <VerdictCard
               player={player}
               advice={advice}
+              maxPrice={maxPrice}
               price={price}
               rules={activeRules}
               legalMax={selectedLegalMax}
@@ -532,6 +536,7 @@ function MyTeamBar({
 function VerdictCard({
   player,
   advice,
+  maxPrice,
   price,
   rules,
   legalMax,
@@ -544,14 +549,16 @@ function VerdictCard({
   onCancel,
   onOpenPlayer,
 }) {
-  /* The headline answers the question actually being asked at the table — "at
-     this price, yes or no?" — so it follows the live number, not the static
+  /* The headline answers the question actually being asked at the table —
+     "at this price, yes or no?" — so it follows the live number, not the static
      recommendation. The recommendation stays underneath as the reference. */
+     
   const { tone, headline, recommendation, purpose } = bidVerdict({
     advice,
     price,
     rules,
     legalMax,
+    maxPrice,
   });
 
   const forOther = owner !== userTeamIndex;
@@ -563,12 +570,22 @@ function VerdictCard({
     >
       <div className="verdict-head">
         <RoleChip role={player.ruolo} large />
+
         <div className="verdict-id">
           <h2>{player.nome}</h2>
           <p>
             {player.squadra} · {formatTier(player.guida_asta_fascia)}
           </p>
         </div>
+
+        {maxPrice !== null ? (
+          <div className="max-price-badge">
+            <span className="max-price-badge__label">TUO MAX</span>
+            <strong>{maxPrice}</strong>
+            <span>cr</span>
+          </div>
+        ) : null}
+
         <button
           type="button"
           className="btn btn--ghost btn--sm"
@@ -587,7 +604,13 @@ function VerdictCard({
         </span>
       </div>
 
-      <BidGauge advice={advice} price={price} rules={rules} legalMax={legalMax} />
+      <BidGauge
+        advice={advice}
+        price={price}
+        rules={rules}
+        legalMax={legalMax}
+        maxPrice={maxPrice}
+      />
 
       <div className="bidbar">
         <PriceStepper
@@ -612,9 +635,12 @@ function VerdictCard({
               </option>
             ))}
           </select>
-          {/* Recording a purchase is neutral: green here would read as approval
-              of the price, which is exactly what the gauge is for. */}
-          <button type="button" className="btn btn--primary" onClick={onAssign}>
+
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={onAssign}
+          >
             Assegna
           </button>
         </div>
@@ -625,6 +651,7 @@ function VerdictCard({
               ? "Stai registrando l'acquisto di un'altra squadra: il consiglio resta calcolato sulla tua."
               : `Massimo consentito dalle regole: ${legalMax} crediti.`}
           </span>
+
           <button
             type="button"
             className="btn btn--ghost btn--sm"
@@ -639,7 +666,6 @@ function VerdictCard({
     </section>
   );
 }
-
 /** Where the remaining budget should go next, by department. */
 function RosePlan({ overview }) {
   return (

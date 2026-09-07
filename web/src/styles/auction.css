@@ -320,6 +320,14 @@
   );
 }
 
+.gauge-mark--personal {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--c-brand) 0 4px,
+    transparent 4px 7px
+  );
+}
+
 .gauge-mark--market {
   background: repeating-linear-gradient(
     to bottom,
@@ -378,6 +386,10 @@
 
 .gauge-legend .k-cap {
   background: var(--c-stop);
+}
+
+.gauge-legend .k-personal {
+  background: var(--c-brand);
 }
 
 .gauge-legend .k-market {
@@ -622,4 +634,32 @@
     background: var(--c-surface);
     backdrop-filter: none;
   }
+}
+.max-price-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--color-fanta-border);
+  border-radius: 0.75rem;
+  background: var(--color-fanta-raised);
+  white-space: nowrap;
+}
+
+.max-price-badge__label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-fanta-muted);
+}
+
+.max-price-badge strong {
+  font-size: 1.05rem;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.max-price-badge > span:last-child {
+  font-size: 0.7rem;
+  color: var(--color-fanta-muted);
 }
